@@ -32,6 +32,36 @@
         "GOOGLE_OAUTH_CLIENT_ID": "${GOOGLE_OAUTH_CLIENT_ID}",
         "GOOGLE_OAUTH_CLIENT_SECRET": "${GOOGLE_OAUTH_CLIENT_SECRET}"
       }
+    },
+    "magic": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@21st-dev/magic@latest"
+      ],
+      "env": {
+        "API_KEY": "${MAGIC_API_KEY}"
+      }
+    },
+    "smartbear": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "bugsnag-mcp-server"
+      ],
+      "env": {
+        "BUGSNAG_API_KEY": "${BUGSNAG_API_KEY}"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
     }
   },
   "systemConfig": {
@@ -59,5 +89,12 @@
       }
     }
   },
-  "bearerKeys": []
+  "bearerKeys": [],
+  "users": [
+    {
+      "username": "admin",
+      "password": "$2b$10$y/ublM4srlEh61SRHS/70.btvi4B2mw6aJNGJOZvLFM8GdfAihpx2",
+      "isAdmin": true
+    }
+  ]
 }
