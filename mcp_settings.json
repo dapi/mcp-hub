@@ -1,30 +1,63 @@
 {
   "mcpServers": {
-    "telegram": {
-      "command": "mcp-telegram",
-      "args": [],
-      "env": {
-        "TELEGRAM_BOT_TOKEN": "${TELEGRAM_BOT_TOKEN}"
-      }
-    },
     "tavily": {
       "command": "npx",
-      "args": ["-y", "@tavily/mcp-server"],
+      "args": ["-y", "tavily-mcp"],
       "env": {
         "TAVILY_API_KEY": "${TAVILY_API_KEY}"
       }
     },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--headless", "--isolated"]
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--isolated"
+      ]
     },
     "google_workspace": {
       "command": "uvx",
-      "args": ["workspace-mcp", "--tools", "drive", "docs", "sheets"],
+      "args": [
+        "workspace-mcp",
+        "--tools",
+        "drive",
+        "docs",
+        "sheets"
+      ],
       "env": {
         "GOOGLE_OAUTH_CLIENT_ID": "${GOOGLE_OAUTH_CLIENT_ID}",
         "GOOGLE_OAUTH_CLIENT_SECRET": "${GOOGLE_OAUTH_CLIENT_SECRET}"
       }
     }
-  }
+  },
+  "systemConfig": {
+    "oauthServer": {
+      "enabled": true,
+      "accessTokenLifetime": 3600,
+      "refreshTokenLifetime": 1209600,
+      "authorizationCodeLifetime": 300,
+      "requireClientSecret": false,
+      "allowedScopes": [
+        "read",
+        "write"
+      ],
+      "requireState": false,
+      "dynamicRegistration": {
+        "enabled": true,
+        "allowedGrantTypes": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "requiresAuthentication": false
+      }
+    }
+  },
+  "users": [
+    {
+      "username": "admin",
+      "password": "$2b$10$kqoGo.4oW6jXU181fKRYWudyBwfjr26Ys.VvzhH36/LqckS5RG4QC",
+      "isAdmin": true
+    }
+  ]
 }
