@@ -64,9 +64,10 @@
       }
     },
     "docmost": {
-      "command": "node",
+      "command": "npx",
       "args": [
-        "/home/danil/.docmost-mcp/build/index.js"
+        "-y",
+        "docmost-mcp"
       ],
       "env": {
         "DOCMOST_API_URL": "${DOCMOST_API_URL}",
