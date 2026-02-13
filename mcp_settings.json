@@ -2,7 +2,10 @@
   "mcpServers": {
     "tavily": {
       "command": "npx",
-      "args": ["-y", "tavily-mcp"],
+      "args": [
+        "-y",
+        "tavily-mcp"
+      ],
       "env": {
         "TAVILY_API_KEY": "${TAVILY_API_KEY}"
       }
@@ -32,8 +35,11 @@
     }
   },
   "systemConfig": {
+    "routing": {
+      "enableBearerAuth": false
+    },
     "oauthServer": {
-      "enabled": true,
+      "enabled": false,
       "accessTokenLifetime": 3600,
       "refreshTokenLifetime": 1209600,
       "authorizationCodeLifetime": 300,
@@ -53,11 +59,5 @@
       }
     }
   },
-  "users": [
-    {
-      "username": "admin",
-      "password": "$2b$10$kqoGo.4oW6jXU181fKRYWudyBwfjr26Ys.VvzhH36/LqckS5RG4QC",
-      "isAdmin": true
-    }
-  ]
+  "bearerKeys": []
 }
