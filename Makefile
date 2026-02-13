@@ -60,15 +60,19 @@ endif
 
 _start_manual:
 	@mkdir -p data
-	@if [ -f $(PID_FILE) ] && kill -0 $$(cat $(PID_FILE)) 2>/dev/null; then \
-		echo "MCPHub already running (PID: $$(cat $(PID_FILE)))"; \
-	else \
-		source .env 2>/dev/null || true; \
-		PORT=$${MCPHUB_PORT:-9700}; \
-		nohup npx @samanhappy/mcphub --port $$PORT --config ./mcp_settings.json > $(LOG_FILE) 2>&1 & \
-		echo $$! > $(PID_FILE); \
-		echo "Started MCPHub (PID: $$!, Port: $$PORT)"; \
-	fi
+	@( \
+		flock -n 200 || { echo "Another start operation in progress"; exit 1; }; \
+		if [ -f $(PID_FILE) ] && kill -0 $$(cat $(PID_FILE)) 2>/dev/null; then \
+			echo "MCPHub already running (PID: $$(cat $(PID_FILE)))"; \
+		else \
+			rm -f $(PID_FILE); \
+			source .env 2>/dev/null || true; \
+			PORT=$${MCPHUB_PORT:-9700}; \
+			nohup npx -y @samanhappy/mcphub --port $$PORT --config ./mcp_settings.json > $(LOG_FILE) 2>&1 & \
+			echo $$! > $(PID_FILE); \
+			echo "Started MCPHub (PID: $$!, Port: $$PORT)"; \
+		fi \
+	) 200>$(REPO_DIR)/data/.lock
 
 stop:
 ifeq ($(PLATFORM),linux)

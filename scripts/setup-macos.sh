@@ -13,6 +13,7 @@ if [ -z "$NPX_PATH" ]; then
     echo "Error: npx not found. Install Node.js first."
     exit 1
 fi
+NPX_DIR="$(dirname "$NPX_PATH")"
 
 # Create LaunchAgents directory if needed
 mkdir -p "$HOME/Library/LaunchAgents"
@@ -56,7 +57,7 @@ cat > "$PLIST_FILE" << EOF
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+        <string>${NPX_DIR}:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
     </dict>
 </dict>
 </plist>

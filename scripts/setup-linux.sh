@@ -17,6 +17,9 @@ fi
 # Create systemd user directory
 mkdir -p "$HOME/.config/systemd/user"
 
+# Create data directory for logs
+mkdir -p "$REPO_DIR/data"
+
 # Create service file
 cat > "$SERVICE_FILE" << EOF
 [Unit]
@@ -29,7 +32,7 @@ WorkingDirectory=${REPO_DIR}
 ExecStart=${NPX_PATH} @samanhappy/mcphub --port \${MCPHUB_PORT:-9700} --config ./mcp_settings.json
 Restart=on-failure
 RestartSec=5
-EnvironmentFile=${REPO_DIR}/.env
+EnvironmentFile=-${REPO_DIR}/.env
 
 [Install]
 WantedBy=default.target
