@@ -1,10 +1,12 @@
-.PHONY: install start stop restart status logs setup unsetup open help
+.PHONY: all install start stop restart status logs setup unsetup open help claude-install claude-uninstall
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
 PLATFORM := $(shell ./scripts/detect-platform.sh 2>/dev/null || echo "unknown")
 PID_FILE := $(REPO_DIR)/data/.pid
 LOG_FILE := $(REPO_DIR)/data/mcphub.log
+
+all: install setup claude-install
 
 # Default target
 help:
@@ -19,6 +21,8 @@ help:
 	@echo "  make setup     - Configure autostart (systemd/launchd)"
 	@echo "  make unsetup   - Remove autostart configuration"
 	@echo "  make open      - Open dashboard in browser"
+	@echo "  make claude-install   - Install MCP servers in Claude CLI (user scope)"
+	@echo "  make claude-uninstall - Remove MCP servers from Claude CLI (user scope)"
 	@echo ""
 	@echo "Platform: $(PLATFORM)"
 
@@ -178,3 +182,23 @@ open:
 	else \
 		echo "Cannot open browser. Visit: $$URL"; \
 	fi
+
+claude-install:
+	@command -v claude >/dev/null 2>&1 || { echo "Error: claude CLI not found"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@source .env 2>/dev/null || true; \
+	PORT=$${MCPHUB_PORT:-9700}; \
+	for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
+		echo "Installing $$name..."; \
+		claude mcp add -s user -t http "$$name" "http://localhost:$$PORT/mcp/$$name" || true; \
+	done
+	@echo "All MCP servers installed in user scope."
+
+claude-uninstall:
+	@command -v claude >/dev/null 2>&1 || { echo "Error: claude CLI not found"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
+		echo "Removing $$name..."; \
+		claude mcp remove -s user "$$name"; \
+	done
+	@echo "All MCP servers removed from user scope."
