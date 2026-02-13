@@ -65,7 +65,7 @@ _start_manual:
 	else \
 		source .env 2>/dev/null || true; \
 		PORT=$${MCPHUB_PORT:-9700}; \
-		nohup npx mcphub --port $$PORT --config ./mcp_settings.json > $(LOG_FILE) 2>&1 & \
+		nohup npx @samanhappy/mcphub --port $$PORT --config ./mcp_settings.json > $(LOG_FILE) 2>&1 & \
 		echo $$! > $(PID_FILE); \
 		echo "Started MCPHub (PID: $$!, Port: $$PORT)"; \
 	fi

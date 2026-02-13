@@ -26,7 +26,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=${REPO_DIR}
-ExecStart=${NPX_PATH} mcphub --port \${MCPHUB_PORT:-9700} --config ./mcp_settings.json
+ExecStart=${NPX_PATH} @samanhappy/mcphub --port \${MCPHUB_PORT:-9700} --config ./mcp_settings.json
 Restart=on-failure
 RestartSec=5
 EnvironmentFile=${REPO_DIR}/.env

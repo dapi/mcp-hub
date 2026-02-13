@@ -39,7 +39,7 @@ cat > "$PLIST_FILE" << EOF
     <key>ProgramArguments</key>
     <array>
         <string>${NPX_PATH}</string>
-        <string>mcphub</string>
+        <string>@samanhappy/mcphub</string>
         <string>--port</string>
         <string>${PORT}</string>
         <string>--config</string>
