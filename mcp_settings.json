@@ -62,6 +62,17 @@
       "env": {
         "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
       }
+    },
+    "docmost": {
+      "command": "node",
+      "args": [
+        "/home/danil/.docmost-mcp/build/index.js"
+      ],
+      "env": {
+        "DOCMOST_API_URL": "${DOCMOST_API_URL}",
+        "DOCMOST_EMAIL": "${DOCMOST_EMAIL}",
+        "DOCMOST_PASSWORD": "${DOCMOST_PASSWORD}"
+      }
     }
   },
   "systemConfig": {
