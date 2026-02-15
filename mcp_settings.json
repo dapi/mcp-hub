@@ -74,6 +74,14 @@
         "DOCMOST_EMAIL": "${DOCMOST_EMAIL}",
         "DOCMOST_PASSWORD": "${DOCMOST_PASSWORD}"
       }
+    },
+    "telegram": {
+      "command": "mcp-telegram-server",
+      "args": [],
+      "env": {
+        "TELEGRAM_API_ID": "${TELEGRAM_API_ID}",
+        "TELEGRAM_API_HASH": "${TELEGRAM_API_HASH}"
+      }
     }
   },
   "systemConfig": {

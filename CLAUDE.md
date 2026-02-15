@@ -26,21 +26,21 @@ Environment="PATH=/home/danil/.local/share/mise/shims:/home/danil/.local/bin:/us
 
 ## Подключение из Claude Code
 
-В `~/.claude.json` каждый MCP сервер через HTTP:
+В `~/.claude.json` каждый MCP сервер через SSE (MCPHub использует SSE-транспорт, НЕ Streamable HTTP):
 
 ```json
 {
   "playwright": {
-    "type": "http",
-    "url": "http://localhost:9700/mcp/playwright"
+    "type": "sse",
+    "url": "http://localhost:9700/sse/playwright"
   },
   "tavily": {
-    "type": "http",
-    "url": "http://localhost:9700/mcp/tavily"
+    "type": "sse",
+    "url": "http://localhost:9700/sse/tavily"
   },
   "google_workspace": {
-    "type": "http",
-    "url": "http://localhost:9700/mcp/google_workspace"
+    "type": "sse",
+    "url": "http://localhost:9700/sse/google_workspace"
   }
 }
 ```
@@ -48,5 +48,12 @@ Environment="PATH=/home/danil/.local/share/mise/shims:/home/danil/.local/bin:/us
 ## Добавление нового MCP сервера
 
 1. Добавить в `mcp_settings.json` в секцию `mcpServers`
+   - ОБЯЗАТЕЛЬНО указать `"args": []` даже если аргументов нет (иначе MCPHub не создаст транспорт и SSE-роуты не зарегистрируются)
 2. `make restart`
-3. Добавить HTTP запись в `~/.claude.json`
+3. Добавить SSE запись в `~/.claude.json` (type: "sse", url: `http://localhost:9700/sse/<имя_сервера>`)
+
+### Важно: URL-пути MCPHub
+
+- `/sse/<group>` — SSE-транспорт (используется Claude Code)
+- `/mcp/<group>` — Streamable HTTP (POST-based, НЕ для Claude Code SSE)
+- НЕ путать `/mcp/` и `/sse/`!

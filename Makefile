@@ -1,4 +1,4 @@
-.PHONY: all install start stop restart status logs setup unsetup open help claude-install claude-uninstall
+.PHONY: all install install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -12,15 +12,17 @@ all: install setup claude-install
 help:
 	@echo "MCP-Hub Management Commands:"
 	@echo ""
-	@echo "  make install   - Check dependencies, create .env from template"
-	@echo "  make start     - Start MCPHub"
-	@echo "  make stop      - Stop MCPHub"
-	@echo "  make restart   - Restart MCPHub"
-	@echo "  make status    - Show MCPHub status"
-	@echo "  make logs      - Show MCPHub logs"
-	@echo "  make setup     - Configure autostart (systemd/launchd)"
-	@echo "  make unsetup   - Remove autostart configuration"
-	@echo "  make open      - Open dashboard in browser"
+	@echo "  make install          - Check dependencies, create .env from template"
+	@echo "  make install-telegram - Install mcp-telegram (requires uv)"
+	@echo "  make telegram-sign-in - Authenticate with Telegram"
+	@echo "  make start            - Start MCPHub"
+	@echo "  make stop             - Stop MCPHub"
+	@echo "  make restart          - Restart MCPHub"
+	@echo "  make status           - Show MCPHub status"
+	@echo "  make logs             - Show MCPHub logs"
+	@echo "  make setup            - Configure autostart (systemd/launchd)"
+	@echo "  make unsetup          - Remove autostart configuration"
+	@echo "  make open             - Open dashboard in browser"
 	@echo "  make claude-install   - Install MCP servers in Claude CLI (user scope)"
 	@echo "  make claude-uninstall - Remove MCP servers from Claude CLI (user scope)"
 	@echo ""
@@ -41,6 +43,36 @@ install:
 		echo ".env already exists"; \
 	fi
 	@echo "Install complete. Run 'make setup' to configure autostart."
+
+install-telegram:
+	@command -v uv >/dev/null 2>&1 || { echo "Error: uv not found. Install it first: https://docs.astral.sh/uv/"; exit 1; }
+	@echo "Installing mcp-telegram..."
+	@uv tool install git+https://github.com/sparfenyuk/mcp-telegram
+	@echo ""
+	@echo "mcp-telegram installed. Next steps:"
+	@echo "  1. Get API credentials at https://my.telegram.org/auth"
+	@echo "  2. Set TELEGRAM_API_ID and TELEGRAM_API_HASH in .env"
+	@echo "  3. make telegram-sign-in"
+	@echo "  4. make restart"
+
+telegram-sign-in:
+	@command -v mcp-telegram >/dev/null 2>&1 || { echo "Error: mcp-telegram not installed. Run 'make install-telegram' first."; exit 1; }
+	@source .env 2>/dev/null || true; \
+	if [ -z "$$TELEGRAM_API_ID" ] || [ -z "$$TELEGRAM_API_HASH" ]; then \
+		echo "Error: TELEGRAM_API_ID and TELEGRAM_API_HASH must be set in .env"; \
+		exit 1; \
+	fi; \
+	PHONE="$$TELEGRAM_PHONE"; \
+	if [ -z "$$PHONE" ]; then \
+		read -p "Enter phone number (with country code, e.g. +79001234567): " PHONE; \
+		if [ -z "$$PHONE" ]; then \
+			echo "Error: Phone number is required."; \
+			exit 1; \
+		fi; \
+	else \
+		echo "Using phone from .env: $$PHONE"; \
+	fi; \
+	cd /tmp && mcp-telegram sign-in --api-id "$$TELEGRAM_API_ID" --api-hash "$$TELEGRAM_API_HASH" --phone-number "$$PHONE"
 
 start:
 ifeq ($(PLATFORM),linux)
@@ -190,7 +222,7 @@ claude-install:
 	PORT=$${MCPHUB_PORT:-9700}; \
 	for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
 		echo "Installing $$name..."; \
-		claude mcp add -s user -t http "$$name" "http://localhost:$$PORT/mcp/$$name" || true; \
+		claude mcp add -s user -t sse "$$name" "http://localhost:$$PORT/sse/$$name" || true; \
 	done
 	@echo "All MCP servers installed in user scope."
 
