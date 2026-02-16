@@ -17,7 +17,7 @@ make logs     # Логи
 НИКОГДА не читай и не редактируй `.claude.json` напрямую. Используй `claude` CLI:
 
 ```bash
-claude mcp add -s user -t sse <name> <url>   # Добавить MCP сервер
+claude mcp add -s user -t http <name> <url>   # Добавить MCP сервер
 claude mcp remove -s user <name>              # Удалить MCP сервер
 claude mcp list                               # Показать серверы
 ```
@@ -41,7 +41,7 @@ Environment="PATH=/home/danil/.local/share/mise/shims:/home/danil/.local/bin:/us
 Используй `make claude-install` или CLI напрямую:
 
 ```bash
-claude mcp add -s user -t sse <name> "http://localhost:9700/mcp/<name>"
+claude mcp add -s user -t http <name> "http://localhost:9700/mcp/<name>"
 ```
 
 НИКОГДА не редактируй `.claude.json` вручную — `CLAUDE_CONFIG_DIR` может указывать на другой путь.
@@ -51,12 +51,12 @@ claude mcp add -s user -t sse <name> "http://localhost:9700/mcp/<name>"
 1. Добавить в `mcp_settings.json` в секцию `mcpServers`
    - ОБЯЗАТЕЛЬНО указать `"args": []` даже если аргументов нет (иначе MCPHub не создаст транспорт)
 2. `make restart`
-3. `make claude-install` или `claude mcp add -s user -t sse <имя> "http://localhost:9700/mcp/<имя>"`
+3. `make claude-install` или `claude mcp add -s user -t http <имя> "http://localhost:9700/mcp/<имя>"`
 
 ### URL-пути MCPHub
 
-- `/mcp/<group>` — Streamable HTTP (используется Claude Code с `type: "sse"`)
-- `/sse/<group>` — SSE-транспорт (legacy)
+- `/mcp/<group>` — Streamable HTTP (используется Claude Code с `-t http`)
+- `/sse/<group>` — SSE-транспорт (legacy, НЕ использовать)
 
 ### Переменная PORT
 
