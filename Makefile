@@ -128,6 +128,7 @@ else ifeq ($(PLATFORM),macos)
 else
 	$(MAKE) _stop_manual
 endif
+	@$(MAKE) _kill_orphans
 
 _stop_manual:
 	@if [ -f $(PID_FILE) ]; then \
@@ -142,6 +143,17 @@ _stop_manual:
 	else \
 		echo "PID file not found"; \
 	fi
+
+_kill_orphans:
+	@MAIN_PID=$$(systemctl --user show mcp-hub --property=MainPID 2>/dev/null | cut -d= -f2); \
+	CGROUP=$$(systemctl --user show mcp-hub --property=ControlGroup 2>/dev/null | cut -d= -f2); \
+	pgrep -f "mcphub.*--config" 2>/dev/null | while read PID; do \
+		if [ -n "$$CGROUP" ] && [ -f "/proc/$$PID/cgroup" ] && grep -q "$$CGROUP" "/proc/$$PID/cgroup" 2>/dev/null; then \
+			continue; \
+		fi; \
+		TREE=$$(pgrep -P $$PID 2>/dev/null || true); \
+		kill $$PID $$TREE 2>/dev/null && echo "Killed orphan MCPHub process: $$PID"; \
+	done; true
 
 restart: stop
 	@sleep 1
@@ -222,7 +234,7 @@ claude-install:
 	PORT=$${MCPHUB_PORT:-9700}; \
 	for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
 		echo "Installing $$name..."; \
-		claude mcp add -s user -t sse "$$name" "http://localhost:$$PORT/sse/$$name" || true; \
+		claude mcp add -s user -t sse "$$name" "http://localhost:$$PORT/mcp/$$name" || true; \
 	done
 	@echo "All MCP servers installed in user scope."
 

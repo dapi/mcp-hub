@@ -12,6 +12,18 @@ make status   # Статус
 make logs     # Логи
 ```
 
+## .claude.json
+
+НИКОГДА не читай и не редактируй `.claude.json` напрямую. Используй `claude` CLI:
+
+```bash
+claude mcp add -s user -t sse <name> <url>   # Добавить MCP сервер
+claude mcp remove -s user <name>              # Удалить MCP сервер
+claude mcp list                               # Показать серверы
+```
+
+`CLAUDE_CONFIG_DIR` может указывать на нестандартный путь, и реальный `.claude.json` будет не в `~/.claude.json`.
+
 ## Важные настройки
 
 ### Systemd и mise
@@ -26,34 +38,34 @@ Environment="PATH=/home/danil/.local/share/mise/shims:/home/danil/.local/bin:/us
 
 ## Подключение из Claude Code
 
-В `~/.claude.json` каждый MCP сервер через SSE (MCPHub использует SSE-транспорт, НЕ Streamable HTTP):
+Используй `make claude-install` или CLI напрямую:
 
-```json
-{
-  "playwright": {
-    "type": "sse",
-    "url": "http://localhost:9700/sse/playwright"
-  },
-  "tavily": {
-    "type": "sse",
-    "url": "http://localhost:9700/sse/tavily"
-  },
-  "google_workspace": {
-    "type": "sse",
-    "url": "http://localhost:9700/sse/google_workspace"
-  }
-}
+```bash
+claude mcp add -s user -t sse <name> "http://localhost:9700/mcp/<name>"
 ```
+
+НИКОГДА не редактируй `.claude.json` вручную — `CLAUDE_CONFIG_DIR` может указывать на другой путь.
 
 ## Добавление нового MCP сервера
 
 1. Добавить в `mcp_settings.json` в секцию `mcpServers`
-   - ОБЯЗАТЕЛЬНО указать `"args": []` даже если аргументов нет (иначе MCPHub не создаст транспорт и SSE-роуты не зарегистрируются)
+   - ОБЯЗАТЕЛЬНО указать `"args": []` даже если аргументов нет (иначе MCPHub не создаст транспорт)
 2. `make restart`
-3. Добавить SSE запись в `~/.claude.json` (type: "sse", url: `http://localhost:9700/sse/<имя_сервера>`)
+3. `make claude-install` или `claude mcp add -s user -t sse <имя> "http://localhost:9700/mcp/<имя>"`
 
-### Важно: URL-пути MCPHub
+### URL-пути MCPHub
 
-- `/sse/<group>` — SSE-транспорт (используется Claude Code)
-- `/mcp/<group>` — Streamable HTTP (POST-based, НЕ для Claude Code SSE)
-- НЕ путать `/mcp/` и `/sse/`!
+- `/mcp/<group>` — Streamable HTTP (используется Claude Code с `type: "sse"`)
+- `/sse/<group>` — SSE-транспорт (legacy)
+
+### Переменная PORT
+
+MCPHub передаёт **все** env-переменные дочерним процессам (`...process.env`).
+`PORT=9700` из `.env` наследуется всеми серверами. Для google_workspace это вызывает
+конфликт портов (workspace-mcp поднимает OAuth callback на `PORT`).
+Решение: переопределить `PORT` в env секции google_workspace через `GOOGLE_OAUTH_PORT`.
+
+### Зомби-процессы
+
+`make stop` убивает orphan-процессы MCPHub. Если при `make restart` порт занят — вероятно,
+остался процесс от ручного запуска. `make stop` зачищает и их.
