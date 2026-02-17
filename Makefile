@@ -1,4 +1,4 @@
-.PHONY: all install install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall
+.PHONY: all install install-deps install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -13,6 +13,7 @@ help:
 	@echo "MCP-Hub Management Commands:"
 	@echo ""
 	@echo "  make install          - Check dependencies, create .env from template"
+	@echo "  make install-deps     - Install CLI tools (himalaya, tgcli)"
 	@echo "  make install-telegram - Install mcp-telegram (requires uv)"
 	@echo "  make telegram-sign-in - Authenticate with Telegram"
 	@echo "  make start            - Start MCPHub"
@@ -43,6 +44,25 @@ install:
 		echo ".env already exists"; \
 	fi
 	@echo "Install complete. Run 'make setup' to configure autostart."
+
+install-deps:
+	@echo "Installing CLI dependencies..."
+	@command -v himalaya >/dev/null 2>&1 && echo "himalaya: already installed" || $(MAKE) _install_himalaya
+	@command -v tgcli >/dev/null 2>&1 && echo "tgcli: already installed" || $(MAKE) _install_tgcli
+	@echo "Done."
+
+_install_himalaya:
+ifeq ($(PLATFORM),macos)
+	brew install himalaya
+else ifeq ($(PLATFORM),linux)
+	cargo install himalaya
+else
+	@echo "Error: unsupported platform $(PLATFORM) for himalaya"; exit 1
+endif
+
+_install_tgcli:
+	@command -v pip3 >/dev/null 2>&1 || { echo "Error: pip3 not found"; exit 1; }
+	pip3 install --user tgcli
 
 install-telegram:
 	@command -v uv >/dev/null 2>&1 || { echo "Error: uv not found. Install it first: https://docs.astral.sh/uv/"; exit 1; }
