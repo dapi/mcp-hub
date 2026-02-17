@@ -155,6 +155,8 @@ _kill_orphans:
 		kill $$PID $$TREE 2>/dev/null && echo "Killed orphan MCPHub process: $$PID"; \
 	done; true
 
+claude-update: claude-uninstall claude-install
+
 restart: stop
 	@sleep 1
 	$(MAKE) start
