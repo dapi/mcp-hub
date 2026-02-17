@@ -1,4 +1,4 @@
-.PHONY: all install install-deps install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall
+.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall enable disable servers
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -13,7 +13,8 @@ help:
 	@echo "MCP-Hub Management Commands:"
 	@echo ""
 	@echo "  make install          - Check dependencies, create .env from template"
-	@echo "  make install-deps     - Install CLI tools (himalaya, tgcli)"
+	@echo "  make install-deps     - Install CLI tools (himalaya, tgcli, gh)"
+	@echo "  make install-docmost-mcp - Build docmost-mcp from GitHub"
 	@echo "  make install-telegram - Install mcp-telegram (requires uv)"
 	@echo "  make telegram-sign-in - Authenticate with Telegram"
 	@echo "  make start            - Start MCPHub"
@@ -26,6 +27,9 @@ help:
 	@echo "  make open             - Open dashboard in browser"
 	@echo "  make claude-install   - Install MCP servers in Claude CLI (user scope)"
 	@echo "  make claude-uninstall - Remove MCP servers from Claude CLI (user scope)"
+	@echo "  make servers          - List all MCP servers with status"
+	@echo "  make enable  name=X   - Enable server X (MCPHub + Claude CLI)"
+	@echo "  make disable name=X   - Disable server X (MCPHub + Claude CLI)"
 	@echo ""
 	@echo "Platform: $(PLATFORM)"
 
@@ -75,6 +79,18 @@ else ifeq ($(PLATFORM),linux)
 else
 	@echo "Error: unsupported platform $(PLATFORM) for gh"; exit 1
 endif
+
+install-docmost-mcp:
+	@echo "Installing docmost-mcp from GitHub..."
+	@if [ -d vendor/docmost-mcp ]; then \
+		echo "Updating existing clone..."; \
+		cd vendor/docmost-mcp && git pull; \
+	else \
+		mkdir -p vendor; \
+		git clone https://github.com/dapi/docmost-mcp.git vendor/docmost-mcp; \
+	fi
+	@cd vendor/docmost-mcp && npm install && npm run build
+	@echo "docmost-mcp installed at vendor/docmost-mcp/build/index.js"
 
 install-telegram:
 	@command -v uv >/dev/null 2>&1 || { echo "Error: uv not found. Install it first: https://docs.astral.sh/uv/"; exit 1; }
@@ -261,16 +277,56 @@ open:
 		echo "Cannot open browser. Visit: $$URL"; \
 	fi
 
+servers:
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@jq -r '.mcpServers | to_entries[] | if .value.enabled == false then "  \(.key)\t[disabled]" else "  \(.key)\t[enabled]" end' mcp_settings.json
+
+enable:
+	@test -n "$(name)" || { echo "Usage: make enable name=<server>"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@jq -e '.mcpServers["$(name)"]' mcp_settings.json >/dev/null 2>&1 || { echo "Error: server '$(name)' not found"; exit 1; }
+	@source .env 2>/dev/null || true; \
+	PORT=$${MCPHUB_PORT:-9700}; \
+	echo "Enabling $(name) in MCPHub..."; \
+	curl -sf -X POST "http://localhost:$$PORT/api/servers/$(name)/toggle" \
+		-H 'Content-Type: application/json' -d '{"enabled": true}' >/dev/null \
+		&& echo "  MCPHub: enabled" \
+		|| echo "  MCPHub: failed (is it running?)"; \
+	if command -v claude >/dev/null 2>&1; then \
+		echo "Adding $(name) to Claude CLI..."; \
+		claude mcp add -s user -t http "$(name)" "http://localhost:$$PORT/mcp/$(name)" \
+			&& echo "  Claude CLI: added" \
+			|| echo "  Claude CLI: failed"; \
+	fi
+
+disable:
+	@test -n "$(name)" || { echo "Usage: make disable name=<server>"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@jq -e '.mcpServers["$(name)"]' mcp_settings.json >/dev/null 2>&1 || { echo "Error: server '$(name)' not found"; exit 1; }
+	@source .env 2>/dev/null || true; \
+	PORT=$${MCPHUB_PORT:-9700}; \
+	echo "Disabling $(name) in MCPHub..."; \
+	curl -sf -X POST "http://localhost:$$PORT/api/servers/$(name)/toggle" \
+		-H 'Content-Type: application/json' -d '{"enabled": false}' >/dev/null \
+		&& echo "  MCPHub: disabled" \
+		|| echo "  MCPHub: failed (is it running?)"; \
+	if command -v claude >/dev/null 2>&1; then \
+		echo "Removing $(name) from Claude CLI..."; \
+		claude mcp remove -s user "$(name)" \
+			&& echo "  Claude CLI: removed" \
+			|| echo "  Claude CLI: failed"; \
+	fi
+
 claude-install:
 	@command -v claude >/dev/null 2>&1 || { echo "Error: claude CLI not found"; exit 1; }
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
 	@source .env 2>/dev/null || true; \
 	PORT=$${MCPHUB_PORT:-9700}; \
-	for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
+	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false) | .key' mcp_settings.json); do \
 		echo "Installing $$name..."; \
 		claude mcp add -s user -t http "$$name" "http://localhost:$$PORT/mcp/$$name" || true; \
 	done
-	@echo "All MCP servers installed in user scope."
+	@echo "All enabled MCP servers installed in user scope."
 
 claude-uninstall:
 	@command -v claude >/dev/null 2>&1 || { echo "Error: claude CLI not found"; exit 1; }

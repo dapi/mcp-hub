@@ -42,7 +42,8 @@
       ],
       "env": {
         "API_KEY": "${MAGIC_API_KEY}"
-      }
+      },
+      "enabled": false
     },
     "smartbear": {
       "command": "npx",
@@ -52,7 +53,8 @@
       ],
       "env": {
         "BUGSNAG_API_KEY": "${BUGSNAG_API_KEY}"
-      }
+      },
+      "enabled": true
     },
     "context7": {
       "command": "npx",
@@ -65,10 +67,9 @@
       }
     },
     "docmost": {
-      "command": "npx",
+      "command": "node",
       "args": [
-        "-y",
-        "docmost-mcp"
+        "./vendor/docmost-mcp/build/index.js"
       ],
       "env": {
         "DOCMOST_API_URL": "${DOCMOST_API_URL}",
@@ -79,7 +80,8 @@
   },
   "systemConfig": {
     "routing": {
-      "enableBearerAuth": false
+      "enableBearerAuth": false,
+      "skipAuth": true
     },
     "oauthServer": {
       "enabled": false,

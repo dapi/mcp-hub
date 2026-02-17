@@ -5,6 +5,9 @@
 # MCPHub data
 data/
 
+# Vendored dependencies
+vendor/
+
 # Node
 node_modules/
 
