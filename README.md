@@ -110,6 +110,7 @@ make restart
 | Команда | Описание |
 |---------|----------|
 | `make install` | Проверить зависимости, создать .env |
+| `make install-deps` | Установить CLI-инструменты (himalaya, tgcli) |
 | `make start` | Запустить MCPHub |
 | `make stop` | Остановить MCPHub |
 | `make restart` | Перезапустить MCPHub |
@@ -142,6 +143,25 @@ make restart
    make restart
    make claude-install
    ```
+
+## CLI-инструменты
+
+Некоторые инструменты лучше использовать напрямую через CLI, а не через MCP-сервер. Причины:
+
+- **Скорость** — прямой вызов CLI быстрее, чем маршрутизация через MCP
+- **Надёжность** — меньше промежуточных слоёв, меньше точек отказа
+- **Простота** — Claude Code вызывает их через Bash без дополнительной настройки
+
+| Инструмент | Назначение | Установка |
+|-----------|-----------|-----------|
+| [himalaya](https://github.com/pimalaya/himalaya) | Email — чтение, отправка, управление | `cargo install himalaya` / `brew install himalaya` |
+| [tgcli](https://github.com/erayerdin/tgcli) | Telegram — отправка сообщений из CLI | `pip3 install tgcli` |
+
+Установить все сразу:
+
+```bash
+make install-deps
+```
 
 ## Текущие серверы
 
