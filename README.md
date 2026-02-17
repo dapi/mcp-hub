@@ -110,7 +110,7 @@ make restart
 | Команда | Описание |
 |---------|----------|
 | `make install` | Проверить зависимости, создать .env |
-| `make install-deps` | Установить CLI-инструменты (himalaya, tgcli) |
+| `make install-deps` | Установить CLI-инструменты (himalaya, tgcli, gh) |
 | `make start` | Запустить MCPHub |
 | `make stop` | Остановить MCPHub |
 | `make restart` | Перезапустить MCPHub |
@@ -156,6 +156,7 @@ make restart
 |-----------|-----------|-----------|
 | [himalaya](https://github.com/pimalaya/himalaya) | Email — чтение, отправка, управление | `cargo install himalaya` / `brew install himalaya` |
 | [tgcli](https://github.com/erayerdin/tgcli) | Telegram — отправка сообщений из CLI | `pip3 install tgcli` |
+| [gh](https://cli.github.com/) | GitHub — PR, issues, reviews, API | `apt install gh` / `brew install gh` |
 
 Установить все сразу:
 

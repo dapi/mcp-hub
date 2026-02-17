@@ -49,6 +49,7 @@ install-deps:
 	@echo "Installing CLI dependencies..."
 	@command -v himalaya >/dev/null 2>&1 && echo "himalaya: already installed" || $(MAKE) _install_himalaya
 	@command -v tgcli >/dev/null 2>&1 && echo "tgcli: already installed" || $(MAKE) _install_tgcli
+	@command -v gh >/dev/null 2>&1 && echo "gh: already installed" || $(MAKE) _install_gh
 	@echo "Done."
 
 _install_himalaya:
@@ -63,6 +64,17 @@ endif
 _install_tgcli:
 	@command -v pip3 >/dev/null 2>&1 || { echo "Error: pip3 not found"; exit 1; }
 	pip3 install --user tgcli
+
+_install_gh:
+ifeq ($(PLATFORM),macos)
+	brew install gh
+else ifeq ($(PLATFORM),linux)
+	@command -v apt >/dev/null 2>&1 && { sudo apt install -y gh; } || \
+	command -v dnf >/dev/null 2>&1 && { sudo dnf install -y gh; } || \
+	{ echo "Error: install gh manually — https://cli.github.com/"; exit 1; }
+else
+	@echo "Error: unsupported platform $(PLATFORM) for gh"; exit 1
+endif
 
 install-telegram:
 	@command -v uv >/dev/null 2>&1 || { echo "Error: uv not found. Install it first: https://docs.astral.sh/uv/"; exit 1; }
