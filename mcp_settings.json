@@ -69,7 +69,7 @@
     "docmost": {
       "command": "node",
       "args": [
-        "./vendor/docmost-mcp/build/index.js"
+        "/home/danil/code/mcp-hub/vendor/docmost-mcp/build/index.js"
       ],
       "env": {
         "DOCMOST_API_URL": "${DOCMOST_API_URL}",

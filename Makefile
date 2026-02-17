@@ -90,7 +90,11 @@ install-docmost-mcp:
 		git clone https://github.com/dapi/docmost-mcp.git vendor/docmost-mcp; \
 	fi
 	@cd vendor/docmost-mcp && npm install && npm run build
-	@echo "docmost-mcp installed at vendor/docmost-mcp/build/index.js"
+	@ABSPATH="$(REPO_DIR)/vendor/docmost-mcp/build/index.js"; \
+	command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }; \
+	jq --arg path "$$ABSPATH" '.mcpServers.docmost.args = [$$path]' mcp_settings.json > mcp_settings.json.tmp \
+		&& mv mcp_settings.json.tmp mcp_settings.json; \
+	echo "docmost-mcp installed at $$ABSPATH"
 
 install-telegram:
 	@command -v uv >/dev/null 2>&1 || { echo "Error: uv not found. Install it first: https://docs.astral.sh/uv/"; exit 1; }
