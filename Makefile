@@ -1,4 +1,4 @@
-.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall enable disable servers
+.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall enable disable servers _vendor_install
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -126,7 +126,21 @@ telegram-sign-in:
 	fi; \
 	cd /tmp && mcp-telegram sign-in --api-id "$$TELEGRAM_API_ID" --api-hash "$$TELEGRAM_API_HASH" --phone-number "$$PHONE"
 
-start:
+_vendor_install:
+	@for dir in vendor/*/; do \
+		if [ -f "$$dir/package.json" ]; then \
+			echo "Updating $$dir..."; \
+			cd "$$dir" && \
+			if [ -d .git ]; then git checkout -- . && git pull; fi && \
+			npm install && npm run build && \
+			VERSION=$$(node -p "require('./package.json').version" 2>/dev/null || echo "unknown") && \
+			COMMIT=$$(git rev-parse --short HEAD 2>/dev/null || echo "unknown") && \
+			echo "  $$dir v$$VERSION ($$COMMIT)" && \
+			cd $(REPO_DIR); \
+		fi; \
+	done
+
+start: _vendor_install
 ifeq ($(PLATFORM),linux)
 	@if systemctl --user is-enabled mcp-hub >/dev/null 2>&1; then \
 		systemctl --user start mcp-hub; \
