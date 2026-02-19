@@ -14,7 +14,7 @@ help:
 	@echo ""
 	@echo "  make install          - Check dependencies, create .env from template"
 	@echo "  make install-deps     - Install CLI tools (himalaya, tgcli, gh)"
-	@echo "  make install-docmost-mcp - Build docmost-mcp from GitHub"
+	@echo "  make install-docmost-mcp - Install docmost-mcp via npm"
 	@echo "  make install-telegram - Install mcp-telegram (requires uv)"
 	@echo "  make telegram-sign-in - Authenticate with Telegram"
 	@echo "  make start            - Start MCPHub"
@@ -81,20 +81,9 @@ else
 endif
 
 install-docmost-mcp:
-	@echo "Installing docmost-mcp from GitHub..."
-	@if [ -d vendor/docmost-mcp ]; then \
-		echo "Updating existing clone..."; \
-		cd vendor/docmost-mcp && git pull; \
-	else \
-		mkdir -p vendor; \
-		git clone https://github.com/dapi/docmost-mcp.git vendor/docmost-mcp; \
-	fi
-	@cd vendor/docmost-mcp && npm install && npm run build
-	@ABSPATH="$(REPO_DIR)/vendor/docmost-mcp/build/index.js"; \
-	command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }; \
-	jq --arg path "$$ABSPATH" '.mcpServers.docmost.args = [$$path]' mcp_settings.json > mcp_settings.json.tmp \
-		&& mv mcp_settings.json.tmp mcp_settings.json; \
-	echo "docmost-mcp installed at $$ABSPATH"
+	@echo "Installing docmost-mcp..."
+	npm install
+	@echo "docmost-mcp installed"
 
 install-telegram:
 	@command -v uv >/dev/null 2>&1 || { echo "Error: uv not found. Install it first: https://docs.astral.sh/uv/"; exit 1; }
@@ -127,6 +116,7 @@ telegram-sign-in:
 	cd /tmp && mcp-telegram sign-in --api-id "$$TELEGRAM_API_ID" --api-hash "$$TELEGRAM_API_HASH" --phone-number "$$PHONE"
 
 _vendor_install:
+	@if [ -f package.json ]; then npm install --prefer-offline --no-audit 2>/dev/null || true; fi
 	@for dir in vendor/*/; do \
 		if [ -f "$$dir/package.json" ]; then \
 			echo "Updating $$dir..."; \

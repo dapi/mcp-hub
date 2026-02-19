@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "docmost-mcp": "github:dapi/docmost-mcp"
+  }
+}
