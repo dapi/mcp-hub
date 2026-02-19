@@ -184,7 +184,7 @@ else ifeq ($(PLATFORM),macos)
 else
 	$(MAKE) _stop_manual
 endif
-	@$(MAKE) _kill_orphans
+	-@$(MAKE) _kill_orphans
 
 _stop_manual:
 	@if [ -f $(PID_FILE) ]; then \
@@ -201,12 +201,13 @@ _stop_manual:
 	fi
 
 _kill_orphans:
-	@MAIN_PID=$$(systemctl --user show mcp-hub --property=MainPID 2>/dev/null | cut -d= -f2); \
+	@sleep 1; \
 	CGROUP=$$(systemctl --user show mcp-hub --property=ControlGroup 2>/dev/null | cut -d= -f2); \
 	pgrep -f "mcphub.*--config" 2>/dev/null | while read PID; do \
 		if [ -n "$$CGROUP" ] && [ -f "/proc/$$PID/cgroup" ] && grep -q "$$CGROUP" "/proc/$$PID/cgroup" 2>/dev/null; then \
 			continue; \
 		fi; \
+		kill -0 $$PID 2>/dev/null || continue; \
 		TREE=$$(pgrep -P $$PID 2>/dev/null || true); \
 		kill $$PID $$TREE 2>/dev/null && echo "Killed orphan MCPHub process: $$PID"; \
 	done; true
