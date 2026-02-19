@@ -33,6 +33,7 @@ ExecStart=${NPX_PATH} @samanhappy/mcphub --port \${MCPHUB_PORT:-9700} --config .
 Restart=on-failure
 RestartSec=5
 EnvironmentFile=-${REPO_DIR}/.env
+Environment="PATH=/home/danil/.local/share/mise/shims:/home/danil/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 [Install]
 WantedBy=default.target
