@@ -14,6 +14,22 @@ if [ -z "$NPX_PATH" ]; then
     exit 1
 fi
 
+# Build PATH for systemd service from current user environment
+SERVICE_PATH="/usr/local/bin:/usr/bin:/bin"
+# Add mise shims if mise is installed
+if command -v mise >/dev/null 2>&1; then
+    MISE_SHIMS="$(mise where shims 2>/dev/null || echo "$HOME/.local/share/mise/shims")"
+    [ -d "$MISE_SHIMS" ] && SERVICE_PATH="$MISE_SHIMS:$SERVICE_PATH"
+fi
+# Add user local bin
+[ -d "$HOME/.local/bin" ] && SERVICE_PATH="$HOME/.local/bin:$SERVICE_PATH"
+# Add directory containing npx (in case it's not in standard paths)
+NPX_DIR="$(dirname "$NPX_PATH")"
+case ":$SERVICE_PATH:" in
+    *":$NPX_DIR:"*) ;;
+    *) SERVICE_PATH="$NPX_DIR:$SERVICE_PATH" ;;
+esac
+
 # Create systemd user directory
 mkdir -p "$HOME/.config/systemd/user"
 
@@ -33,7 +49,7 @@ ExecStart=${NPX_PATH} @samanhappy/mcphub --port \${MCPHUB_PORT:-9700} --config .
 Restart=on-failure
 RestartSec=5
 EnvironmentFile=-${REPO_DIR}/.env
-Environment="PATH=/home/danil/.local/share/mise/shims:/home/danil/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PATH=${SERVICE_PATH}"
 
 [Install]
 WantedBy=default.target
