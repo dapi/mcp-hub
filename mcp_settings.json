@@ -69,7 +69,7 @@
     "docmost": {
       "command": "npx",
       "args": [
-        "docmost-mcp"
+        "github:dapi/docmost-mcp"
       ],
       "env": {
         "DOCMOST_API_URL": "${DOCMOST_API_URL}",
