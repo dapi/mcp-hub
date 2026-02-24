@@ -49,6 +49,7 @@ ExecStart=${NPX_PATH} @samanhappy/mcphub --port \${MCPHUB_PORT} --config ./mcp_s
 Restart=on-failure
 RestartSec=5
 EnvironmentFile=-${REPO_DIR}/.env
+EnvironmentFile=-${REPO_DIR}/.env.local
 Environment="PATH=${SERVICE_PATH}"
 
 [Install]
