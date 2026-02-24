@@ -333,6 +333,7 @@ claude-install:
 	PORT=$${MCPHUB_PORT:-9700}; \
 	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false) | .key' mcp_settings.json); do \
 		echo "Installing $$name..."; \
+		claude mcp remove -s user "$$name" 2>/dev/null; \
 		claude mcp add -s user -t http "$$name" "http://localhost:$$PORT/mcp/$$name" || true; \
 	done
 	@echo "All enabled MCP servers installed in user scope."
