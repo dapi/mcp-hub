@@ -64,12 +64,13 @@ graph LR
    make open       # откроет dashboard
    ```
 
-4. Подключить серверы к Claude Code:
+4. Подключить серверы к клиенту:
    ```bash
-   make claude-install    # установит все серверы из mcp_settings.json
+   make claude-install    # установит все серверы в Claude Code
+   make codex-install     # установит все серверы в Codex CLI
    ```
 
-5. Перезапустить сессию Claude Code
+5. Перезапустить сессию клиента (Claude/Codex)
 
 ## Миграция с отдельных MCP серверов
 
@@ -97,6 +98,7 @@ systemctl --user daemon-reload
 
 ```bash
 make claude-install
+make codex-install
 ```
 
 ### 5. Перезапустить хаб
@@ -121,6 +123,11 @@ make restart
 | `make open` | Открыть dashboard |
 | `make claude-install` | Установить все MCP серверы в Claude Code |
 | `make claude-uninstall` | Удалить все MCP серверы из Claude Code |
+| `make codex-install` | Установить все MCP серверы в Codex CLI |
+| `make codex-uninstall` | Удалить все MCP серверы из Codex CLI |
+| `make codex-update` | Переустановить все MCP серверы в Codex CLI |
+| `make mcp-install` | Алиас для `make codex-install` |
+| `make mcp-reinstall` | Алиас для `make codex-update` |
 | `make install-telegram` | Установить mcp-telegram |
 | `make telegram-sign-in` | Авторизоваться в Telegram |
 
@@ -142,6 +149,7 @@ make restart
    ```bash
    make restart
    make claude-install
+   make codex-install
    ```
 
 ## CLI-инструменты

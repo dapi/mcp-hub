@@ -1,4 +1,4 @@
-.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall enable disable servers _vendor_install
+.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall claude-update codex-install codex-uninstall codex-update mcp-install mcp-uninstall mcp-reinstall enable disable servers _vendor_install
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -27,6 +27,11 @@ help:
 	@echo "  make open             - Open dashboard in browser"
 	@echo "  make claude-install   - Install MCP servers in Claude CLI (user scope)"
 	@echo "  make claude-uninstall - Remove MCP servers from Claude CLI (user scope)"
+	@echo "  make codex-install    - Install MCP servers in Codex CLI"
+	@echo "  make codex-uninstall  - Remove MCP servers from Codex CLI"
+	@echo "  make codex-update     - Reinstall MCP servers in Codex CLI"
+	@echo "  make mcp-install      - Alias for make codex-install"
+	@echo "  make mcp-reinstall    - Alias for make codex-update"
 	@echo "  make servers          - List all MCP servers with status"
 	@echo "  make enable  name=X   - Enable server X (MCPHub + Claude CLI)"
 	@echo "  make disable name=X   - Disable server X (MCPHub + Claude CLI)"
@@ -214,6 +219,12 @@ _kill_orphans:
 
 claude-update: claude-uninstall claude-install
 
+codex-update: codex-uninstall codex-install
+
+mcp-install: codex-install
+mcp-uninstall: codex-uninstall
+mcp-reinstall: codex-update
+
 restart: stop
 	@sleep 1
 	$(MAKE) start
@@ -346,3 +357,24 @@ claude-uninstall:
 		claude mcp remove -s user "$$name"; \
 	done
 	@echo "All MCP servers removed from user scope."
+
+codex-install:
+	@command -v codex >/dev/null 2>&1 || { echo "Error: codex CLI not found"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@source .env 2>/dev/null || true; \
+	PORT=$${MCPHUB_PORT:-9700}; \
+	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false) | .key' mcp_settings.json); do \
+		echo "Installing $$name..."; \
+		codex mcp remove "$$name" 2>/dev/null || true; \
+		codex mcp add "$$name" --url "http://localhost:$$PORT/mcp/$$name" || true; \
+	done
+	@echo "All enabled MCP servers installed in Codex CLI."
+
+codex-uninstall:
+	@command -v codex >/dev/null 2>&1 || { echo "Error: codex CLI not found"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
+		echo "Removing $$name..."; \
+		codex mcp remove "$$name" || true; \
+	done
+	@echo "All MCP servers removed from Codex CLI."
