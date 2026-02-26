@@ -76,6 +76,13 @@
         "DOCMOST_EMAIL": "${DOCMOST_EMAIL}",
         "DOCMOST_PASSWORD": "${DOCMOST_PASSWORD}"
       }
+    },
+    "krisp": {
+      "type": "streamable-http",
+      "url": "https://mcp.krisp.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${KRISP_MCP_ACCESS_TOKEN}"
+      }
     }
   },
   "systemConfig": {
