@@ -17,7 +17,8 @@
         "@playwright/mcp@latest",
         "--headless",
         "--isolated"
-      ]
+      ],
+      "enabled": false
     },
     "google_workspace": {
       "command": "uvx",
@@ -75,7 +76,8 @@
         "DOCMOST_API_URL": "${DOCMOST_API_URL}",
         "DOCMOST_EMAIL": "${DOCMOST_EMAIL}",
         "DOCMOST_PASSWORD": "${DOCMOST_PASSWORD}"
-      }
+      },
+      "enabled": false
     },
     "krisp": {
       "type": "streamable-http",

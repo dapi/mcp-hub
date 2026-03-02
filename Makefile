@@ -8,6 +8,10 @@ LOG_FILE := $(REPO_DIR)/data/mcphub.log
 
 all: install setup claude-install
 
+skills:
+	npm install -g @playwright/cli@latest
+	npx skills add https://github.com/microsoft/playwright-cli --skill playwright-cli
+
 # Default target
 help:
 	@echo "MCP-Hub Management Commands:"
