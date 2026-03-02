@@ -1,6 +1,8 @@
 {
   "private": true,
   "dependencies": {
-    "docmost-mcp": "github:dapi/docmost-mcp"
+    "commander": "^14.0.3",
+    "docmost-mcp": "github:dapi/docmost-mcp",
+    "mcporter": "^0.7.3"
   }
 }

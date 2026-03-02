@@ -1,4 +1,4 @@
-.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall claude-update codex-install codex-uninstall codex-update mcp-install mcp-uninstall mcp-reinstall enable disable servers _vendor_install
+.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall claude-update codex-install codex-uninstall codex-update mcp-install mcp-uninstall mcp-reinstall enable disable attach detach servers _vendor_install cli-generate cli-install cli-update skills-install skills-uninstall
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -7,6 +7,9 @@ PID_FILE := $(REPO_DIR)/data/.pid
 LOG_FILE := $(REPO_DIR)/data/mcphub.log
 
 all: install setup claude-install
+
+mcporter:
+	npx mcporter list
 
 skills:
 	npm install -g @playwright/cli@latest
@@ -39,6 +42,13 @@ help:
 	@echo "  make servers          - List all MCP servers with status"
 	@echo "  make enable  name=X   - Enable server X (MCPHub + Claude CLI)"
 	@echo "  make disable name=X   - Disable server X (MCPHub + Claude CLI)"
+	@echo "  make attach  name=X   - Set autoload + register in Claude/Codex CLI"
+	@echo "  make detach  name=X   - Unset autoload + remove from Claude/Codex CLI"
+	@echo "  make cli-generate     - Generate CLI wrappers for all enabled MCP servers"
+	@echo "  make cli-install      - Generate + install CLIs to ~/.local/bin/"
+	@echo "  make cli-update       - Regenerate and reinstall all CLIs"
+	@echo "  make skills-install   - Install skills and commands to ~/.claude/"
+	@echo "  make skills-uninstall - Remove installed skills and commands"
 	@echo ""
 	@echo "Platform: $(PLATFORM)"
 
@@ -221,6 +231,44 @@ _kill_orphans:
 		kill $$PID $$TREE 2>/dev/null && echo "Killed orphan MCPHub process: $$PID"; \
 	done; true
 
+attach:
+	@test -n "$(name)" || { echo "Usage: make attach name=<server>"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@jq -e '.mcpServers["$(name)"]' mcp_settings.json >/dev/null 2>&1 || { echo "Error: server '$(name)' not found"; exit 1; }
+	@jq '.mcpServers["$(name)"].autoload = true' mcp_settings.json > mcp_settings.json.tmp && mv mcp_settings.json.tmp mcp_settings.json
+	@echo "Set autoload=true for $(name)"
+	@source .env 2>/dev/null || true; \
+	PORT=$${MCPHUB_PORT:-9700}; \
+	if command -v claude >/dev/null 2>&1; then \
+		claude mcp remove -s user "$(name)" 2>/dev/null; \
+		claude mcp add -s user -t http "$(name)" "http://localhost:$$PORT/mcp/$(name)" \
+			&& echo "  Claude CLI: added" \
+			|| echo "  Claude CLI: failed"; \
+	fi; \
+	if command -v codex >/dev/null 2>&1; then \
+		codex mcp remove "$(name)" 2>/dev/null || true; \
+		codex mcp add "$(name)" --url "http://localhost:$$PORT/mcp/$(name)" \
+			&& echo "  Codex CLI: added" \
+			|| echo "  Codex CLI: failed"; \
+	fi
+
+detach:
+	@test -n "$(name)" || { echo "Usage: make detach name=<server>"; exit 1; }
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@jq -e '.mcpServers["$(name)"]' mcp_settings.json >/dev/null 2>&1 || { echo "Error: server '$(name)' not found"; exit 1; }
+	@jq 'del(.mcpServers["$(name)"].autoload)' mcp_settings.json > mcp_settings.json.tmp && mv mcp_settings.json.tmp mcp_settings.json
+	@echo "Removed autoload for $(name)"
+	@if command -v claude >/dev/null 2>&1; then \
+		claude mcp remove -s user "$(name)" \
+			&& echo "  Claude CLI: removed" \
+			|| echo "  Claude CLI: failed"; \
+	fi; \
+	if command -v codex >/dev/null 2>&1; then \
+		codex mcp remove "$(name)" \
+			&& echo "  Codex CLI: removed" \
+			|| echo "  Codex CLI: failed"; \
+	fi
+
 claude-update: claude-uninstall claude-install
 
 codex-update: codex-uninstall codex-install
@@ -303,7 +351,7 @@ open:
 
 servers:
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
-	@jq -r '.mcpServers | to_entries[] | if .value.enabled == false then "  \(.key)\t[disabled]" else "  \(.key)\t[enabled]" end' mcp_settings.json
+	@jq -r '.mcpServers | to_entries[] | "  \(.key)\t\(if .value.enabled == false then "[disabled]" else "[enabled]" end)\(if .value.autoload == true then " [autoload]" else "" end)"' mcp_settings.json
 
 enable:
 	@test -n "$(name)" || { echo "Usage: make enable name=<server>"; exit 1; }
@@ -346,12 +394,12 @@ claude-install:
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
 	@source .env 2>/dev/null || true; \
 	PORT=$${MCPHUB_PORT:-9700}; \
-	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false) | .key' mcp_settings.json); do \
+	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false and .value.autoload == true) | .key' mcp_settings.json); do \
 		echo "Installing $$name..."; \
 		claude mcp remove -s user "$$name" 2>/dev/null; \
 		claude mcp add -s user -t http "$$name" "http://localhost:$$PORT/mcp/$$name" || true; \
 	done
-	@echo "All enabled MCP servers installed in user scope."
+	@echo "All autoload MCP servers installed in user scope."
 
 claude-uninstall:
 	@command -v claude >/dev/null 2>&1 || { echo "Error: claude CLI not found"; exit 1; }
@@ -367,12 +415,12 @@ codex-install:
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
 	@source .env 2>/dev/null || true; \
 	PORT=$${MCPHUB_PORT:-9700}; \
-	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false) | .key' mcp_settings.json); do \
+	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false and .value.autoload == true) | .key' mcp_settings.json); do \
 		echo "Installing $$name..."; \
 		codex mcp remove "$$name" 2>/dev/null || true; \
 		codex mcp add "$$name" --url "http://localhost:$$PORT/mcp/$$name" || true; \
 	done
-	@echo "All enabled MCP servers installed in Codex CLI."
+	@echo "All autoload MCP servers installed in Codex CLI."
 
 codex-uninstall:
 	@command -v codex >/dev/null 2>&1 || { echo "Error: codex CLI not found"; exit 1; }
@@ -382,3 +430,82 @@ codex-uninstall:
 		codex mcp remove "$$name" || true; \
 	done
 	@echo "All MCP servers removed from Codex CLI."
+
+# --- CLI generation via mcporter ---
+
+CLI_DIR := $(REPO_DIR)/cli
+BIN_DIR := $(HOME)/.local/bin
+
+cli-generate:
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@mkdir -p $(CLI_DIR)
+	@npm ls mcporter >/dev/null 2>&1 || npm install --save-dev mcporter commander
+	@source .env 2>/dev/null || true; \
+	PORT=$${MCPHUB_PORT:-9700}; \
+	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled == false | not) | .key' mcp_settings.json); do \
+		echo "Generating CLI for $$name..."; \
+		npx mcporter generate-cli "$$name" --timeout 60000 2>/dev/null \
+			&& mv "$(REPO_DIR)/$$name.ts" "$(CLI_DIR)/$$name.ts" \
+			&& echo "  $(CLI_DIR)/$$name.ts" \
+			|| echo "  FAILED: $$name (server may be unreachable)"; \
+	done
+	@echo "Done. CLIs in $(CLI_DIR)/"
+
+cli-install: cli-generate
+	@mkdir -p $(BIN_DIR)
+	@for ts in $(CLI_DIR)/*.ts; do \
+		name=$$(basename "$$ts" .ts); \
+		wrapper="$(BIN_DIR)/$$name"; \
+		printf '#!/bin/sh\nexec bun "$(CLI_DIR)/'"$$name"'.ts" "$$@"\n' > "$$wrapper"; \
+		chmod +x "$$wrapper"; \
+		echo "Installed $$wrapper"; \
+	done
+	@if [ -f "$(CLI_DIR)/google_workspace.ts" ]; then \
+		printf '#!/bin/sh\nexec bun "$(CLI_DIR)/google_workspace.ts" "$$@"\n' > "$(BIN_DIR)/gw"; \
+		chmod +x "$(BIN_DIR)/gw"; \
+		echo "Installed $(BIN_DIR)/gw (alias for google_workspace)"; \
+	fi
+	@echo "Done. CLIs available in PATH via $(BIN_DIR)/"
+
+cli-update: cli-generate cli-install
+
+# --- Skills & commands installation ---
+
+SKILLS_SRC := $(REPO_DIR)/skills
+COMMANDS_SRC := $(REPO_DIR)/commands
+SKILLS_DST := $(HOME)/.claude/skills
+COMMANDS_DST := $(HOME)/.claude/commands
+
+skills-install:
+	@mkdir -p $(SKILLS_DST) $(COMMANDS_DST)
+	@for skill in $(SKILLS_SRC)/*/; do \
+		name=$$(basename "$$skill"); \
+		echo "Installing skill: $$name"; \
+		rm -rf "$(SKILLS_DST)/$$name"; \
+		cp -r "$$skill" "$(SKILLS_DST)/$$name"; \
+	done
+	@for cmd in $(COMMANDS_SRC)/*.md; do \
+		[ -f "$$cmd" ] || continue; \
+		name=$$(basename "$$cmd"); \
+		echo "Installing command: $$name"; \
+		cp "$$cmd" "$(COMMANDS_DST)/$$name"; \
+	done
+	@echo "Done. Skills and commands installed to ~/.claude/"
+
+skills-uninstall:
+	@for skill in $(SKILLS_SRC)/*/; do \
+		name=$$(basename "$$skill"); \
+		if [ -d "$(SKILLS_DST)/$$name" ]; then \
+			rm -rf "$(SKILLS_DST)/$$name"; \
+			echo "Removed skill: $$name"; \
+		fi; \
+	done
+	@for cmd in $(COMMANDS_SRC)/*.md; do \
+		[ -f "$$cmd" ] || continue; \
+		name=$$(basename "$$cmd"); \
+		if [ -f "$(COMMANDS_DST)/$$name" ]; then \
+			rm -f "$(COMMANDS_DST)/$$name"; \
+			echo "Removed command: $$name"; \
+		fi; \
+	done
+	@echo "Done."
