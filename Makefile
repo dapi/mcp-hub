@@ -6,7 +6,7 @@ PLATFORM := $(shell ./scripts/detect-platform.sh 2>/dev/null || echo "unknown")
 PID_FILE := $(REPO_DIR)/data/.pid
 LOG_FILE := $(REPO_DIR)/data/mcphub.log
 
-all: install setup claude-install
+all: install setup claude-install mcp-install
 
 mcporter:
 	npx mcporter list
@@ -273,9 +273,9 @@ claude-update: claude-uninstall claude-install
 
 codex-update: codex-uninstall codex-install
 
-mcp-install: codex-install
-mcp-uninstall: codex-uninstall
-mcp-reinstall: codex-update
+mcp-install: claude-install codex-install
+mcp-uninstall: claude-uninstall codex-uninstall
+mcp-reinstall: claude-update codex-update
 
 restart: stop
 	@sleep 1
