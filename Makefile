@@ -6,7 +6,7 @@ PLATFORM := $(shell ./scripts/detect-platform.sh 2>/dev/null || echo "unknown")
 PID_FILE := $(REPO_DIR)/data/.pid
 LOG_FILE := $(REPO_DIR)/data/mcphub.log
 
-all: install setup claude-install mcp-install skills agents
+all: install setup claude-install mcp-install install-skills install-cli agents
 
 mcporter:
 	npx mcporter list
@@ -16,14 +16,15 @@ agents: claude
 claude:
 	npm install -g @anthropic-ai/claude-code
 
-skills:
+insall-cli:
 	npm install -g @playwright/cli@latest
-	npx skills add https://github.com/microsoft/playwright-cli --skill playwright-cli
-	npm install -g @dapi/tgcli
-	npx skills add dapi/tgcli --skill tgcli --agent '*' -g -y
-	npm install -g @dapi/docmost-cli
-	npx skills add dapi/docmost-cli --skill docmost --agent '*' -g -y
+	npm install -g github:dapi/tgcli
+	npm install -g github:dapi/docmost-cli
 
+install-skills:
+	npx skills add https://github.com/microsoft/playwright-cli --skill playwright-cli --agent '*' -g -y
+	npx skills add dapi/tgcli --skill tgcli --agent '*' -g -y
+	npx skills add dapi/docmost-cli --skill docmost --agent '*' -g -y
 
 # Default target
 help:
