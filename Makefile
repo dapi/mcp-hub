@@ -6,10 +6,15 @@ PLATFORM := $(shell ./scripts/detect-platform.sh 2>/dev/null || echo "unknown")
 PID_FILE := $(REPO_DIR)/data/.pid
 LOG_FILE := $(REPO_DIR)/data/mcphub.log
 
-all: install setup claude-install mcp-install
+all: install setup claude-install mcp-install skills agents
 
 mcporter:
 	npx mcporter list
+
+agents: claude
+
+claude:
+	npm install -g @anthropic-ai/claude-code
 
 skills:
 	npm install -g @playwright/cli@latest
@@ -399,12 +404,14 @@ claude-install:
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
 	@source .env 2>/dev/null || true; \
 	PORT=$${MCPHUB_PORT:-9700}; \
+	for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
+		claude mcp remove -s user "$$name" 2>/dev/null && echo "Removed $$name" || true; \
+	done; \
 	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false and .value.autoload == true) | .key' mcp_settings.json); do \
 		echo "Installing $$name..."; \
-		claude mcp remove -s user "$$name" 2>/dev/null; \
 		claude mcp add -s user -t http "$$name" "http://localhost:$$PORT/mcp/$$name" || true; \
 	done
-	@echo "All autoload MCP servers installed in user scope."
+	@echo "All autoload MCP servers synced in user scope."
 
 claude-uninstall:
 	@command -v claude >/dev/null 2>&1 || { echo "Error: claude CLI not found"; exit 1; }
@@ -420,12 +427,14 @@ codex-install:
 	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
 	@source .env 2>/dev/null || true; \
 	PORT=$${MCPHUB_PORT:-9700}; \
+	for name in $$(jq -r '.mcpServers | keys[]' mcp_settings.json); do \
+		codex mcp remove "$$name" 2>/dev/null && echo "Removed $$name" || true; \
+	done; \
 	for name in $$(jq -r '.mcpServers | to_entries[] | select(.value.enabled != false and .value.autoload == true) | .key' mcp_settings.json); do \
 		echo "Installing $$name..."; \
-		codex mcp remove "$$name" 2>/dev/null || true; \
 		codex mcp add "$$name" --url "http://localhost:$$PORT/mcp/$$name" || true; \
 	done
-	@echo "All autoload MCP servers installed in Codex CLI."
+	@echo "All autoload MCP servers synced in Codex CLI."
 
 codex-uninstall:
 	@command -v codex >/dev/null 2>&1 || { echo "Error: codex CLI not found"; exit 1; }
