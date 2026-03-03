@@ -1,4 +1,4 @@
-.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall claude-update codex-install codex-uninstall codex-update mcp-install mcp-uninstall mcp-reinstall enable disable attach detach servers _vendor_install cli-generate cli-install cli-update skills-install skills-uninstall
+.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall claude-update codex-install codex-uninstall codex-update mcp-install mcp-uninstall mcp-reinstall enable disable attach detach servers _vendor_install cli-generate cli-install cli-update skills-install skills-uninstall skills
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -14,6 +14,11 @@ mcporter:
 skills:
 	npm install -g @playwright/cli@latest
 	npx skills add https://github.com/microsoft/playwright-cli --skill playwright-cli
+	npm install -g @dapi/tgcli
+	npx skills add dapi/tgcli --skill tgcli --agent '*' -g -y
+	npm install -g @dapi/docmost-cli
+	npx skills add dapi/docmost-cli --skill docmost --agent '*' -g -y
+
 
 # Default target
 help:
