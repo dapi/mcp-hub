@@ -88,8 +88,8 @@
         "Authorization": "Bearer ${KRISP_MCP_ACCESS_TOKEN}"
       },
       "oauth": {
-        "clientId": "REDACTED_KRISP_CLIENT_ID",
-        "clientSecret": "REDACTED_KRISP_CLIENT_SECRET",
+        "clientId": "${KRISP_CLIENT_ID}",
+        "clientSecret": "${KRISP_CLIENT_SECRET}",
         "scopes": [
           "user::me::read",
           "user::meetings:metadata::read",
@@ -97,13 +97,7 @@
           "user::meetings:transcripts::read",
           "user::meetings::list",
           "user::activities::list"
-        ],
-        "pendingAuthorization": {
-          "codeVerifier": "REDACTED_CODE_VERIFIER",
-          "createdAt": 1772544588502,
-          "authorizationUrl": "https://api.krisp.ai/platform/v1/oauth2/authorize?response_type=code&client_id=REDACTED_KRISP_CLIENT_ID&code_challenge=XrZ6V8t752sTH-6xzso0ev6ZK9fIAdJZIEvX-qWF0FA&code_challenge_method=S256&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth%2Fcallback&state=eyJzZXJ2ZXIiOiJrcmlzcCIsIm5vbmNlIjoiNjFlOWUxM2E2ZmE4NjVlZjBiZjViMDMxZmUwYjliMzMifQ&scope=user%3A%3Ame%3A%3Aread+user%3A%3Ameetings%3Ametadata%3A%3Aread+user%3A%3Ameetings%3Anotes%3A%3Aread+user%3A%3Ameetings%3Atranscripts%3A%3Aread+user%3A%3Ameetings%3A%3Alist+user%3A%3Aactivities%3A%3Alist&resource=https%3A%2F%2Fmcp.krisp.ai%2F",
-          "state": "eyJzZXJ2ZXIiOiJrcmlzcCIsIm5vbmNlIjoiNjFlOWUxM2E2ZmE4NjVlZjBiZjViMDMxZmUwYjliMzMifQ"
-        }
+        ]
       }
     }
   },
