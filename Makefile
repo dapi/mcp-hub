@@ -18,8 +18,8 @@ claude:
 
 insall-cli:
 	npm install -g @playwright/cli@latest
-	npm install -g github:dapi/tgcli
-	npm install -g github:dapi/docmost-cli
+	npm install -g @dapi/tgcli
+	npm install -g @dapi/docmost-cli
 
 install-skills:
 	npx skills add https://github.com/microsoft/playwright-cli --skill playwright-cli --agent '*' -g -y
