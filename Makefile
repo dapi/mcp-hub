@@ -16,7 +16,7 @@ agents: claude
 claude:
 	npm install -g @anthropic-ai/claude-code
 
-insall-cli:
+install-cli:
 	npm install -g @playwright/cli@latest
 	npm install -g @dapi/tgcli
 	npm install -g @dapi/docmost-cli
