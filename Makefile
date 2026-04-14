@@ -1,4 +1,4 @@
-.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall claude-update codex-install codex-uninstall codex-update mcp-install mcp-uninstall mcp-reinstall enable disable attach detach servers _vendor_install cli-generate cli-install cli-update skills-install skills-uninstall skills
+.PHONY: all install install-deps install-docmost-mcp install-telegram telegram-sign-in start stop restart status logs setup unsetup open help claude-install claude-uninstall claude-update codex-install codex-uninstall codex-update cursor-install cursor-uninstall cursor-update mcp-install mcp-uninstall mcp-reinstall enable disable attach detach servers _vendor_install cli-generate cli-install cli-update skills-install skills-uninstall skills
 
 SHELL := /bin/bash
 REPO_DIR := $(shell pwd)
@@ -48,6 +48,9 @@ help:
 	@echo "  make codex-install    - Install MCP servers in Codex CLI"
 	@echo "  make codex-uninstall  - Remove MCP servers from Codex CLI"
 	@echo "  make codex-update     - Reinstall MCP servers in Codex CLI"
+	@echo "  make cursor-install   - Install autoload MCP servers in Cursor (global ~/.cursor/mcp.json)"
+	@echo "  make cursor-uninstall - Remove MCP servers from Cursor (global ~/.cursor/mcp.json)"
+	@echo "  make cursor-update    - Reinstall MCP servers in Cursor (global ~/.cursor/mcp.json)"
 	@echo "  make mcp-install      - Alias for make codex-install"
 	@echo "  make mcp-reinstall    - Alias for make codex-update"
 	@echo "  make servers          - List all MCP servers with status"
@@ -284,9 +287,53 @@ claude-update: claude-uninstall claude-install
 
 codex-update: codex-uninstall codex-install
 
+cursor-update: cursor-uninstall cursor-install
+
 mcp-install: claude-install codex-install
 mcp-uninstall: claude-uninstall codex-uninstall
 mcp-reinstall: claude-update codex-update
+
+cursor-install:
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@mkdir -p "$$HOME/.cursor"
+	@if [ ! -f "$$HOME/.cursor/mcp.json" ]; then \
+		printf '%s\n' '{"mcpServers":{}}' > "$$HOME/.cursor/mcp.json"; \
+	fi
+	@source .env 2>/dev/null || true; \
+	PORT=$${MCPHUB_PORT:-9700}; \
+	TS=$$(date +%Y%m%d%H%M%S); \
+	CONFIG="$$HOME/.cursor/mcp.json"; \
+	BACKUP="$$HOME/.cursor/mcp.json.backup.$$TS"; \
+	TMP="$$HOME/.cursor/mcp.json.tmp.$$TS"; \
+	cp "$$CONFIG" "$$BACKUP"; \
+	NAMES=$$(jq -c '.mcpServers | keys' mcp_settings.json); \
+	AUTOLOAD=$$(jq -c '.mcpServers | to_entries | map(select(.value.enabled != false and .value.autoload == true) | .key)' mcp_settings.json); \
+	jq --argjson names "$$NAMES" --argjson autoload "$$AUTOLOAD" --arg port "$$PORT" '\
+		.mcpServers = (.mcpServers // {}) |\
+		reduce $$names[] as $$n (. ; del(.mcpServers[$$n])) |\
+		reduce $$autoload[] as $$n (. ; .mcpServers[$$n] = {url: ("http://localhost:" + $$port + "/mcp/" + $$n)})\
+	' "$$CONFIG" > "$$TMP" && mv "$$TMP" "$$CONFIG"; \
+	echo "Cursor MCP synced in $$CONFIG (backup: $$BACKUP)"; \
+	echo "Restart Cursor полностью, чтобы перечитать mcp.json."
+
+cursor-uninstall:
+	@command -v jq >/dev/null 2>&1 || { echo "Error: jq not found"; exit 1; }
+	@if [ ! -f "$$HOME/.cursor/mcp.json" ]; then \
+		echo "Cursor config not found: $$HOME/.cursor/mcp.json"; \
+		exit 0; \
+	fi
+	@TS=$$(date +%Y%m%d%H%M%S); \
+	CONFIG="$$HOME/.cursor/mcp.json"; \
+	BACKUP="$$HOME/.cursor/mcp.json.backup.$$TS"; \
+	TMP="$$HOME/.cursor/mcp.json.tmp.$$TS"; \
+	cp "$$CONFIG" "$$BACKUP"; \
+	NAMES=$$(jq -c '.mcpServers | keys' mcp_settings.json); \
+	jq --argjson names "$$NAMES" '\
+		.mcpServers = (.mcpServers // {}) |\
+		reduce $$names[] as $$n (. ; del(.mcpServers[$$n]))\
+	' "$$CONFIG" > "$$TMP" && mv "$$TMP" "$$CONFIG"; \
+	echo "Cursor MCP entries removed from $$CONFIG (backup: $$BACKUP)"; \
+	echo "Restart Cursor полностью, чтобы перечитать mcp.json."
 
 restart: stop
 	@sleep 1

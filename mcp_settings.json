@@ -79,7 +79,8 @@
         "DOCMOST_EMAIL": "${DOCMOST_EMAIL}",
         "DOCMOST_PASSWORD": "${DOCMOST_PASSWORD}"
       },
-      "enabled": true
+      "enabled": true,
+      "autoload": true
     },
     "krisp": {
       "type": "streamable-http",

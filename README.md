@@ -68,9 +68,10 @@ graph LR
    ```bash
    make claude-install    # установит все серверы в Claude Code
    make codex-install     # установит все серверы в Codex CLI
+   make cursor-install    # установит autoload-серверы в Cursor (global ~/.cursor/mcp.json)
    ```
 
-5. Перезапустить сессию клиента (Claude/Codex)
+5. Перезапустить сессию клиента (Claude/Codex/Cursor)
 
 ## Миграция с отдельных MCP серверов
 
@@ -126,6 +127,9 @@ make restart
 | `make codex-install` | Установить все MCP серверы в Codex CLI |
 | `make codex-uninstall` | Удалить все MCP серверы из Codex CLI |
 | `make codex-update` | Переустановить все MCP серверы в Codex CLI |
+| `make cursor-install` | Установить autoload MCP серверы в Cursor (global `~/.cursor/mcp.json`) |
+| `make cursor-uninstall` | Удалить MCP серверы из Cursor (global `~/.cursor/mcp.json`) |
+| `make cursor-update` | Переустановить MCP серверы в Cursor (global `~/.cursor/mcp.json`) |
 | `make mcp-install` | Алиас для `make codex-install` |
 | `make mcp-reinstall` | Алиас для `make codex-update` |
 | `make install-telegram` | Установить mcp-telegram |
